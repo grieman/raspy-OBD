@@ -3,6 +3,7 @@ Data should be as pandas Series """
 
 import pandas as pd
 import numpy as np
+from fbprophet import Prophet
 
 def detect_outliers(data, tolerance=2):
     """ Finds outliers using local medians """
@@ -76,6 +77,32 @@ def check_threshold(data, threshold, above=True, flexibility=.02, cushion=3):
 
     return across, test_across, times_across
 
-#def remaining_useful_life(data, threshold):
-#    """ Forecasts the remaining time before a threshold is crossed """
+def remaining_useful_life(data, threshold, above=True, max_forecast_length=3600, interval_width=.95):
+    """ Forecasts the remaining time before a threshold is crossed """
+    # needs other input format: dataframe with two columns, ds and y
+    model = Prophet(interval_width=interval_width)
+    model.fit(data)
+    future_dates = model.make_future_dataframe(periods=max_forecast_length)
+    forecast = model.predict(future_dates)[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+    if above:
+        yhat_crossed = forecast["yhat"][forecast["yhat"] > threshold]
+        yhat_leading_crossed = forecast["yhat_upper"][forecast["yhat_upper"] > threshold]
+        yhat_trailing_crossed = forecast["yhat_lower"][forecast["yhat_lower"] > threshold]
+    else:
+        yhat_crossed = forecast["yhat"][forecast["yhat"] < threshold]
+        yhat_leading_crossed = forecast["yhat_upper"][forecast["yhat_upper"] < threshold]
+        yhat_trailing_crossed = forecast["yhat_lower"][forecast["yhat_lower"] < threshold]
+
+    outlist = [yhat_crossed, yhat_leading_crossed, yhat_trailing_crossed]
+    for i, item in enumerate(outlist):
+        if outlist[i].empty:
+            outlist[i] = max_forecast_length
+        else:
+            outlist[i] = outlist[i].index[0]
+
+    yhat_crossed = forecast['ds'][outlist[0]]
+    yhat_leading_crossed = forecast['ds'][outlist[1]]
+    yhat_leading_crossed = forecast['ds'][outlist[2]]
+
+    return yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width
     
