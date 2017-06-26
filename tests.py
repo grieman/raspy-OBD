@@ -81,7 +81,13 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
     """ Forecasts the remaining time before a threshold is crossed """
     # needs other input format: dataframe with two columns, ds and y
     model = Prophet(interval_width=interval_width)
-    model.fit(data)
+    try:
+        data.columns = ['ds', 'y']
+        model.fit(data)
+    except:
+        print("Input must be two columns: a date/time (string) column and a value (numeric) column")
+        raise
+
     future_dates = model.make_future_dataframe(periods=forecast_length)
     forecast = model.predict(future_dates)[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
     if above:
@@ -94,7 +100,7 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
         yhat_trailing_crossed = forecast["yhat_lower"][forecast["yhat_lower"] < threshold]
 
     outlist = [yhat_crossed, yhat_leading_crossed, yhat_trailing_crossed]
-    for i, in enumerate(outlist):
+    for i, item in enumerate(outlist):
         if outlist[i].empty:
             outlist[i] = forecast_length
         else:
@@ -105,3 +111,4 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
     yhat_trailing_crossed = forecast['ds'][outlist[2]]
 
     return yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width
+
