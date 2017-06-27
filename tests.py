@@ -100,7 +100,7 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
         yhat_trailing_crossed = forecast["yhat_lower"][forecast["yhat_lower"] < threshold]
 
     outlist = [yhat_crossed, yhat_leading_crossed, yhat_trailing_crossed]
-    for i, item in enumerate(outlist):
+    for i, _ in enumerate(outlist):
         if outlist[i].empty:
             outlist[i] = forecast_length
         else:
@@ -111,4 +111,3 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
     yhat_trailing_crossed = forecast['ds'][outlist[2]]
 
     return yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width
-
