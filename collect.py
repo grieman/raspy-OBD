@@ -1,5 +1,6 @@
 import obd
 import pandas as pd
+import time
 
 def get_data():
     # rpm = obd.commands.RPM
@@ -16,11 +17,9 @@ def get_data():
     # ethanol = obd.commands.ETHANOL_PERCENT
     # oil_temp = obd.commands.OIL_TEMP
     # fuel_consumption = obd.commands.FUEL_RATE
-
-    rpm = connection.query(obd.connect.RPM)
+    rpm = connection.query(obd.commands.RPM)
     out_row = pd.Series([rpm.time, rpm.value])
-    data = data.append()
-    return data
+    return out_row
 
 
 
@@ -28,7 +27,14 @@ def get_data():
 connection = obd.OBD()
 # ports = obd.scan_serial() 
 # connection = obd.OBD("bluetooth port")
-data = pd.DataFrame()
-data = get_data(data)
 
-
+dataset = pd.DataFrame()
+starttime = time.time()
+try:
+    while True:
+        dataset = dataset.append(get_data(), ignore_index=True)
+        print(dataset)
+        # this ensures that the loop restarts every x=1.0 seconds. May need to be changed if execution becomes too lengthy
+        time.sleep(1.0 - ((time.time() - starttime) % 1.0))
+except KeyboardInterrupt:
+    pass
