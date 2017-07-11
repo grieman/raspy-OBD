@@ -30,11 +30,22 @@ connection = obd.OBD()
 
 dataset = pd.DataFrame()
 starttime = time.time()
+car_on = False
+
 try:
-    while True:
-        dataset = dataset.append(get_data(), ignore_index=True)
-        print(dataset)
-        # this ensures that the loop restarts every x=1.0 seconds. May need to be changed if execution becomes too lengthy
-        time.sleep(1.0 - ((time.time() - starttime) % 1.0))
+  while True:
+    print(dataset)
+    next_row = get_data()
+    if car_on:
+      time.sleep(1.0 - ((time.time() - starttime) % 1.0))
+      dataset = dataset.append(next_row, ignore_index=True)
+      if next_row[1] < 1:
+        car_on = False
+        # save as csv
+    else:
+      time.sleep(10.0 - ((time.time() - starttime) % 10.0))
+      if next_row[1] > 0:
+        car_on = True
+        dataset = pd.DataFrame().append(next_row, ignore_index=True)
 except KeyboardInterrupt:
     pass
