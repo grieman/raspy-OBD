@@ -43,7 +43,7 @@ try:
       dataset = dataset.append(next_row, ignore_index=True)
       if next_row[1] < 1:
         car_on = False
-        filename = time.asctime(time.localtime(next_row[0])) + "_data.csv"
+        filename = "data/" + time.asctime(time.localtime(next_row[0])) + ".csv"
         dataset.to_csv(filename, sep="|")
     else:
       time.sleep(20.0 - ((time.time() - starttime) % 20.0))

@@ -12,7 +12,7 @@ def detect_outliers(data, tolerance=2):
     upperq = data.rolling(5, center=True).quantile(.25)
     iqrs = np.abs(upperq - lowerq)
     diffs = np.abs(data - medians)
-    outliers = diffs > (tolerance * iqrs)
+    outliers = pd.Series(diffs > (tolerance * iqrs))
     return outliers, sum(outliers)
 
 def precision_loss(data): #singular value
@@ -58,7 +58,10 @@ def step_change(data, span=10, lag=1):
     moving_average = data.ewm(span=span).mean()
     lagged = pd.Series(np.append(np.repeat(np.nan, lag), moving_average[:len(moving_average)-lag]))
     diffs = data[lag:] - lagged
-    return moving_average, diffs
+    pct_diff = diffs/moving_average
+    max_diff = max(pct_diff)
+    mean_diff = np.mean(pct_diff)
+    return moving_average, diffs, pct_diff, max_diff, avg_diff
 
 def check_threshold(data, threshold, above=True, flexibility=.02, cushion=3):
     """ Checks if threshold has been exceeded """
@@ -110,4 +113,4 @@ def time_to_threshold(data, threshold, above=True, forecast_length=3600, interva
     yhat_leading_crossed = forecast['ds'][outlist[1]]
     yhat_trailing_crossed = forecast['ds'][outlist[2]]
 
-    return yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width
+    return forecast["yhat"], yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width
