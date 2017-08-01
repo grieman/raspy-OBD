@@ -13,12 +13,22 @@ def health(col = "rpm", data = last_week, upper_threshold, lower_threshold, uppe
     _, _, stable_periods = tests.bad_signal(column, cushion)
     _, _, _, max_diff, mean_diff = tests.step_change(column)
     _, yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed, interval_width = time_to_threshold(data["time", col], threshold=upper_limit, above=True)
-    outlist =  [num_outliers, precision_change, times_over, times_under, stable_periods, max_diff, mean_diff, yhat_leading_crossed, yhat_crossed, yhat_trailing_crossed]
-    # name outlist?
-    return outlist
+    
+    out_dict =  {col + "_num_outliers": num_outliers, 
+                 col + "_precision_change":precision_change, 
+                 col + "_times_over":times_over, 
+                 col + "_times_under":times_under, 
+                 col + "_stable_periods":stable_periods, 
+                 col + "_max_diff":max_diff, 
+                 col + "_mean_diff":mean_diff, 
+                 col + "_yhat_leading_crossed":yhat_leading_crossed, 
+                 col + "_yhat_crossed":yhat_crossed, 
+                 col + "_yhat_trailing_crossed":yhat_trailing_crossed}
+    return out_dict
 
 # use to loop through all measurements
-parameter_dict = {rpm:["rpm", 3000, 1000, 4000, 3]}
+parameter_list = [["rpm", 3000, 1000, 4000, 3],
+                  ["fuel", 0, 1, 1, 3]]
 
 
 path = 'path/to/data/new'
@@ -27,20 +37,27 @@ new_csvs = [i for i in glob.glob('*.csv')]
 
 for dataset in new_csvs:
     new_data = pd.read_csv(dataset)
+    datetimes = new_data["time"]
 
-    ## Add to SQL table
+    ## Add to SQL table and remove from memory
 
-    one_week_prior = new_data["time"] - timedelta(days=7)
-    #thirty_days_prior = new_data["time"] - timedelta(days=30)
+    out_dataframe = pd.DataFrame()
 
-    for date in one_week_prior:
-        one_week_data = ## data from SQL
+    for date in datetimes:
+        one_week_data = ## ingest data from SQL between date and one week prior
 
-        start = date
-        end = date + timedelta(days = 7)
-        rpm_out = health("rpm", one_week_data, 3000, 1000, 4000, 3])
+        ## Start with two columns - bookending the times analyzed
+        start = date - timedelta(days = 7)
+        end = date
+        row_vec = {"Window Start":start, "Window End":end}
+        for measurement in parameter_list:
+            health_dict = health(measurement[0], one_week_data, measurement[1], measurement[2], measurement[3], 3)
+            row_dict.update(health_dict)
 
-        #concatenate start, end, *_outs
-        # save as new row
+    
+    out_dataframe = out_dataframe.append(out_dict)
+
+    # write to SQL
+
 
         
